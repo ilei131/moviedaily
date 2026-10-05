@@ -23,6 +23,7 @@
 | `GEMINI_API_KEY` | Google AI Studio 申请的 Gemini API Key | ✅ 必填 |
 | `TG_BOT_TOKEN` | Telegram `@BotFather` 申请的机器人 Token | ✅ 必填 |
 | `TG_CHAT_ID` | 接收视频的群组/频道/个人 Chat ID (如 `-100xxxxxxxxxx`) | ✅ 必填 |
+| `TG_CHANNEL_ID` | 同步推送的频道 ID（如 `@ChinesePoetryDaily`） | 可选 |
 | `HF_TOKEN` | HuggingFace Access Token（[申请地址](https://huggingface.co/settings/tokens)），图像备用方案 | 可选 |
 | `PIXABAY_API_KEY` | Pixabay API Key（[申请地址](https://pixabay.com/api/docs/)），用于 BGM | 可选 |
 

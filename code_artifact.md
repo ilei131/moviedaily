@@ -161,6 +161,7 @@ prompt = f"""
 | `GEMINI_API_KEY` | Google AI Studio 申请的 Gemini API 密钥（必填） |
 | `TG_BOT_TOKEN` | Telegram BotFather 颁发的 Bot Token（必填） |
 | `TG_CHAT_ID` | Telegram 目标接收者 ID（个人/群组/频道）（必填） |
+| `TG_CHANNEL_ID` | 同步推送的频道 ID（如 `@ChinesePoetryDaily`）（可选） |
 | `HF_TOKEN` | HuggingFace Access Token，用于图像备用方案（可选） |
 | `PIXABAY_API_KEY` | Pixabay API Key，用于背景音乐下载（可选） |
 

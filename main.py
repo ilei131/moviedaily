@@ -18,6 +18,7 @@ from moviepy.editor import (ImageClip, AudioFileClip, TextClip,
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 TG_BOT_TOKEN = os.getenv("TG_BOT_TOKEN")
 TG_CHAT_ID = os.getenv("TG_CHAT_ID")
+TG_CHANNEL_ID = os.getenv("TG_CHANNEL_ID", None)
 HF_TOKEN = os.getenv("HF_TOKEN", None)
 PIXABAY_API_KEY = os.getenv("PIXABAY_API_KEY", None)
 
@@ -345,11 +346,17 @@ def embed_video_cover(video_path, cover_image_path):
 # --- 13. 发送 Telegram 视频 ---
 def send_to_telegram(video_path, caption):
     url = f"https://api.telegram.org/bot{TG_BOT_TOKEN}/sendVideo"
-    with open(video_path, 'rb') as video_file:
-        files = {'video': video_file}
-        data = {'chat_id': TG_CHAT_ID, 'caption': caption, 'parse_mode': 'Markdown'}
-        res = requests.post(url, files=files, data=data)
-        print("Telegram 推送响应:", res.json())
+    targets = [TG_CHAT_ID]
+    if TG_CHANNEL_ID:
+        targets.append(TG_CHANNEL_ID)
+
+    for chat_id in targets:
+        with open(video_path, 'rb') as video_file:
+            files = {'video': video_file}
+            data = {'chat_id': chat_id, 'caption': caption, 'parse_mode': 'Markdown'}
+            res = requests.post(url, files=files, data=data)
+            target_name = "频道" if chat_id == TG_CHANNEL_ID else "Bot"
+            print(f"Telegram {target_name} 推送响应:", res.json())
 
 # --- 主入口 ---
 async def main():
