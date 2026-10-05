@@ -84,8 +84,7 @@ def get_poem_data(max_retries=3):
       "author": "朝代·作者",
       "poem": "古诗原文（换行分割，如: 床前明月光\\n疑是地上霜）",
       "translation": "现代白话文翻译（简短通顺）",
-      "image_prompt": "适用于AI绘图的英文Prompt，中国传统山水+动漫风格（吉卜力/新海诚风格），色彩明亮鲜艳",
-      "image_prompt_2": "第二个英文Prompt，不同视角或场景，同样山水+动漫风格"
+      "image_prompt": "适用于AI绘图的英文Prompt，需贴合古诗意境，中国传统山水画风格，色彩优雅丰富"
     }}
     只返回纯JSON，不要带任何Markdown标记或额外说明。
     """
@@ -105,9 +104,6 @@ def get_poem_data(max_retries=3):
                 if key not in poem_data or not poem_data[key]:
                     raise ValueError(f"Gemini 返回缺少必要字段: {key}")
             print(f"Gemini 选诗成功: 《{poem_data['title']}》")
-
-            if "image_prompt_2" not in poem_data or not poem_data.get("image_prompt_2"):
-                poem_data["image_prompt_2"] = poem_data.get("image_prompt", "") + ", different composition"
 
             history.append({"title": poem_data["title"], "author": poem_data["author"]})
             save_history(history)
@@ -152,7 +148,7 @@ def validate_image(file_path):
 def download_pollinations_image(prompt, output_path, max_retries=3):
     for attempt in range(max_retries):
         try:
-            full_prompt = f"{prompt}, masterpiece, Chinese landscape, anime art style, Ghibli inspired, vibrant colors, beautiful scenery"
+            full_prompt = f"{prompt}, masterpiece, traditional Chinese landscape painting, elegant harmonious colors, poetic atmosphere, rich details"
             encoded = requests.utils.quote(full_prompt)
             url = f"https://image.pollinations.ai/prompt/{encoded}?width={IMAGE_WIDTH}&height={IMAGE_HEIGHT}&nologo=true&nofeed=true&seed={random.randint(1, 999999)}"
             res = requests.get(url, timeout=120)
@@ -182,7 +178,7 @@ def download_huggingface_image(prompt, output_path):
     try:
         api_url = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
         headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-        payload = {"inputs": f"{prompt}, Chinese landscape, anime art style, Ghibli inspired, vibrant colors, vertical composition"}
+        payload = {"inputs": f"{prompt}, traditional Chinese landscape painting, elegant harmonious colors, poetic atmosphere, vertical composition"}
         res = requests.post(api_url, headers=headers, json=payload, timeout=120)
         if res.status_code == 200 and len(res.content) > 1000:
             with open(output_path, 'wb') as f:
@@ -267,23 +263,12 @@ def build_video(poem_data, poem_audio_path, trans_audio_path, image_paths, bgm_p
     poem_duration = audio_poem.duration
     trans_start_time = poem_duration + 1.5
 
-    # --- 多图轮播 (Ken Burns 缓慢推进 + 交叉淡入淡出) ---
-    num_images = len(image_paths)
-    seg = total_duration / num_images
-    image_clips = []
-    for i, img_path in enumerate(image_paths):
-        is_last = (i == num_images - 1)
-        dur = total_duration - i * seg + 0.8
-        clip = (ImageClip(img_path)
-                .set_start(i * seg)
-                .set_duration(dur)
-                .resize(lambda t, idx=i: (int(IMAGE_WIDTH * (1 + 0.05 * (t - idx * seg) / max(seg, 0.1))),
-                                           int(IMAGE_HEIGHT * (1 + 0.05 * (t - idx * seg) / max(seg, 0.1)))))
-                .set_position(('center', 'center'))
-                .crossfadein(0.6))
-        if not is_last:
-            clip = clip.crossfadeout(0.6)
-        image_clips.append(clip)
+    # --- 单图背景 (Ken Burns 缓慢推进) ---
+    bg_clip = (ImageClip(image_paths[0])
+               .set_duration(total_duration)
+               .resize(lambda t: (int(IMAGE_WIDTH * (1 + 0.03 * t / max(total_duration, 0.1))),
+                                   int(IMAGE_HEIGHT * (1 + 0.03 * t / max(total_duration, 0.1)))))
+               .set_position(('center', 'center')))
 
     # --- 逐句字幕（原文逐行动态出现）---
     poem_lines = [l.strip() for l in poem_data['poem'].split('\n') if l.strip()]
@@ -298,7 +283,7 @@ def build_video(poem_data, poem_audio_path, trans_audio_path, image_paths, bgm_p
             continue
         txt = TextClip(
             line, fontsize=52, color='white', font=FONT_PATH,
-            stroke_color='#FFD700', stroke_width=4,
+            stroke_color='#FFD700', stroke_width=2,
             method='caption', size=(900, None), align='Center'
         ).set_start(current_time).set_duration(end_time - current_time).set_position(('center', 0.72), relative=True)
         subtitle_clips.append(txt)
@@ -309,7 +294,7 @@ def build_video(poem_data, poem_audio_path, trans_audio_path, image_paths, bgm_p
         trans_txt = TextClip(
             f"【译文】\n{poem_data['translation']}",
             fontsize=44, color='white', font=FONT_PATH,
-            stroke_color='#FFD700', stroke_width=4,
+            stroke_color='#FFD700', stroke_width=2,
             method='caption', size=(880, None), align='Center'
         ).set_start(trans_start_time).set_duration(audio_trans.duration).set_position(('center', 0.72), relative=True)
         subtitle_clips.append(trans_txt)
@@ -318,12 +303,12 @@ def build_video(poem_data, poem_audio_path, trans_audio_path, image_paths, bgm_p
     title_clip = TextClip(
         f"《{poem_data['title']}》\n{poem_data['author']}",
         fontsize=44, color='white', font=FONT_PATH,
-        stroke_color='#FFD700', stroke_width=4,
+        stroke_color='#FFD700', stroke_width=2,
         method='caption', size=(900, None), align='Center'
     ).set_duration(total_duration).set_position(('center', 0.08), relative=True)
 
     # --- 合成所有图层 ---
-    all_clips = image_clips + subtitle_clips + [title_clip]
+    all_clips = [bg_clip] + subtitle_clips + [title_clip]
     video = CompositeVideoClip(all_clips, size=(IMAGE_WIDTH, IMAGE_HEIGHT))
 
     # --- 背景音乐混音 ---
@@ -394,7 +379,6 @@ async def main():
     poem_audio_path = "poem.mp3"
     trans_audio_path = "trans.mp3"
     bg_image_1_path = "bg_1.jpg"
-    bg_image_2_path = "bg_2.jpg"
     bgm_path = "bgm.mp3"
     out_video_path = f"{poem_data['title']}.mp4"
 
@@ -402,23 +386,15 @@ async def main():
     await generate_audio(f"{poem_data['title']}。{poem_data['author']}。{poem_data['poem']}", "zh-CN-YunxiNeural", poem_audio_path)
     await generate_audio(f"译文含义：{poem_data['translation']}", "zh-CN-XiaoxiaoNeural", trans_audio_path)
 
-    print("3. 生成意境背景图（主图）...")
+    print("3. 生成意境背景图...")
     download_background_image(poem_data['image_prompt'], bg_image_1_path)
 
-    print("3b. 生成意境背景图（辅图）...")
-    try:
-        download_background_image(poem_data.get('image_prompt_2', poem_data['image_prompt']), bg_image_2_path)
-    except Exception as e:
-        print(f"辅图生成失败，复用主图: {e}")
-        import shutil
-        shutil.copy(bg_image_1_path, bg_image_2_path)
-
-    image_paths = [bg_image_1_path, bg_image_2_path]
+    image_paths = [bg_image_1_path]
 
     print("4. 下载背景音乐...")
     download_bgm(bgm_path)
 
-    print("5. 正在合成视频 (Ken Burns + 逐句字幕 + 多图轮播 + BGM)...")
+    print("5. 正在合成视频 (Ken Burns + 逐句字幕 + BGM)...")
     build_video(poem_data, poem_audio_path, trans_audio_path, image_paths, bgm_path, out_video_path)
 
     print("5b. 嵌入视频封面...")
