@@ -48,7 +48,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: daily-poem-video
-        path: final_poem.mp4
+        path: "*.mp4"
         retention-days: 7
 
     - name: Auto Commit Updated history.json

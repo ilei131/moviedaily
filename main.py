@@ -230,7 +230,9 @@ def build_video(poem_data, poem_audio_path, trans_audio_path, image_paths, bgm_p
         clip = (ImageClip(img_path)
                 .set_start(i * seg)
                 .set_duration(seg + 0.8)
-                .resize(lambda t, idx=i: 1 + 0.05 * (t - idx * seg) / max(seg, 0.1))
+                .resize(lambda t, idx=i: (int(IMAGE_WIDTH * (1 + 0.05 * (t - idx * seg) / max(seg, 0.1))),
+                                           int(IMAGE_HEIGHT * (1 + 0.05 * (t - idx * seg) / max(seg, 0.1)))))
+                .set_position(('center', 'center'))
                 .crossfadein(0.6)
                 .crossfadeout(0.6))
         image_clips.append(clip)
@@ -323,7 +325,7 @@ async def main():
     bg_image_1_path = "bg_1.jpg"
     bg_image_2_path = "bg_2.jpg"
     bgm_path = "bgm.mp3"
-    out_video_path = "final_poem.mp4"
+    out_video_path = f"{poem_data['title']}.mp4"
 
     print("2. 生成 TTS 朗读音频...")
     await generate_audio(f"{poem_data['title']}。{poem_data['author']}。{poem_data['poem']}", "zh-CN-YunxiNeural", poem_audio_path)
