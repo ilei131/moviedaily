@@ -131,7 +131,7 @@ def download_pollinations_image(prompt, output_path, max_retries=2):
         try:
             full_prompt = f"{prompt}, masterpiece, traditional Chinese artistic style"
             encoded = requests.utils.quote(full_prompt)
-            url = f"https://image.pollinations.ai/prompt/{encoded}?width={IMAGE_WIDTH}&height={IMAGE_HEIGHT}&nologo=true&seed={random.randint(1, 999999)}"
+            url = f"https://image.pollinations.ai/prompt/{encoded}?width={IMAGE_WIDTH}&height={IMAGE_HEIGHT}&nologo=true&nofeed=true&seed={random.randint(1, 999999)}"
             res = requests.get(url, timeout=90)
             if res.status_code == 200 and len(res.content) > 1000:
                 with open(output_path, 'wb') as f:
