@@ -84,8 +84,8 @@ def get_poem_data(max_retries=3):
       "author": "朝代·作者",
       "poem": "古诗原文（换行分割，如: 床前明月光\\n疑是地上霜）",
       "translation": "现代白话文翻译（简短通顺）",
-      "image_prompt": "适用于AI绘图的英文Prompt，传统中国水墨画或写实国风",
-      "image_prompt_2": "第二个英文Prompt，不同视角或场景，与第一个互补但风格一致"
+      "image_prompt": "适用于AI绘图的英文Prompt，中国传统山水+动漫风格（吉卜力/新海诚风格），色彩明亮鲜艳",
+      "image_prompt_2": "第二个英文Prompt，不同视角或场景，同样山水+动漫风格"
     }}
     只返回纯JSON，不要带任何Markdown标记或额外说明。
     """
@@ -152,7 +152,7 @@ def validate_image(file_path):
 def download_pollinations_image(prompt, output_path, max_retries=3):
     for attempt in range(max_retries):
         try:
-            full_prompt = f"{prompt}, masterpiece, traditional Chinese artistic style"
+            full_prompt = f"{prompt}, masterpiece, Chinese landscape, anime art style, Ghibli inspired, vibrant colors, beautiful scenery"
             encoded = requests.utils.quote(full_prompt)
             url = f"https://image.pollinations.ai/prompt/{encoded}?width={IMAGE_WIDTH}&height={IMAGE_HEIGHT}&nologo=true&nofeed=true&seed={random.randint(1, 999999)}"
             res = requests.get(url, timeout=120)
@@ -182,7 +182,7 @@ def download_huggingface_image(prompt, output_path):
     try:
         api_url = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
         headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-        payload = {"inputs": f"{prompt}, traditional Chinese ink painting style, vertical composition"}
+        payload = {"inputs": f"{prompt}, Chinese landscape, anime art style, Ghibli inspired, vibrant colors, vertical composition"}
         res = requests.post(api_url, headers=headers, json=payload, timeout=120)
         if res.status_code == 200 and len(res.content) > 1000:
             with open(output_path, 'wb') as f:
