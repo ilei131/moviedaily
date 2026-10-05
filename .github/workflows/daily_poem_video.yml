@@ -37,6 +37,8 @@ jobs:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
         TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
       run: |
         python main.py
 

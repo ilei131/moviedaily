@@ -3,4 +3,4 @@ edge-tts
 moviepy<2.0.0
 requests
 pillow
-pillow-heif
+numpy<2.0.0
