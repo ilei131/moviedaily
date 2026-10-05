@@ -2,5 +2,5 @@ google-genai
 edge-tts
 moviepy<2.0.0
 requests
-pillow
+pillow<10.0.0
 numpy<2.0.0
