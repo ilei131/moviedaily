@@ -1,12 +1,12 @@
-# 🤖 每日古诗视频自动生成与 Telegram 推送 Bot
+# 🤖 古诗词视频生成与 Telegram 推送 Bot（手动触发）
 
-基于 GitHub Actions + Gemini API + Edge-TTS + Pollinations.ai / HuggingFace + MoviePy 搭建的全自动化古诗短视频生成系统。
+基于 GitHub Actions + Gemini API + Edge-TTS + Pollinations.ai / HuggingFace + MoviePy 搭建的古诗短视频生成系统，每次手动触发生成并推送一首。
 
 ## 🌟 特点
 - **零成本**：无需服务器，全套使用免费 API 与开源工具。
 - **不重复**：自动维护 `history.json` 并提交回 Git 仓库，确保 Gemini 每次生成新古诗；失败时指数退避自动重试 3 次。
 - **主备图像生成**：Pollinations.ai 优先，失败自动切换 HuggingFace FLUX.1-schnell，并含图片质量校验。
-- **动态视频效果**：Ken Burns 缓慢缩放 + 多图轮播淡入淡出 + 逐句同步字幕 + 标题固定显示。
+- **动态视频效果**：Ken Burns 缓慢缩放 + 逐句同步字幕 + 标题固定显示。
 - **双声线朗读**：沉稳男声 (Yunxi) 朗读原文，标准女声 (Xiaoxiao) 朗读译文。
 - **可选背景音乐**：从 Pixabay 自动下载免费古风 BGM，低音量混音不抢人声。
 

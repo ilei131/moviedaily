@@ -5,13 +5,13 @@
 ### 1.1 背景与目标
 为了实现传统文化古诗词的自动化传播，本项目设计并实现了一套**100% 免费、完全无服务器（Serverless）、全自动化的古诗词短视频生成与推送系统**。
 
-系统每日定时挑选一首中国经典古诗词，深入理解其意境并自动生成配音（古诗朗读 + 白话文译文）、AI 水墨意境配图与排版字幕，最终合成为 MP4 高清短视频，自动推送至 Telegram 指定频道/群组/个人。
+系统每次手动触发时挑选一首中国经典古诗词，深入理解其意境并自动生成配音（古诗朗读 + 白话文译文）、AI 山水动漫风格配图与排版字幕，最终合成为 MP4 高清短视频，自动推送至 Telegram 指定频道/群组/个人。
 
 ### 1.2 核心特性
 - **零成本运行**：利用 GitHub Actions 作为算力平台，配合免费且无额度限制的 TTS/T2I 接口与 Gemini API。
 - **智能去重**：自动持久化维护历史生成记录，确保选诗不重复。
 - **多声线自然朗读**：采用微软 Edge-TTS 引擎，分别使用沉稳男声朗读古诗原文、标准女声朗读现代翻译。
-- **主备图像生成**：优先使用 Pollinations.ai (FLUX) 生成国风水墨背景，失败时自动切换 HuggingFace FLUX.1-schnell 备用方案，并含图片质量校验。
+- **主备图像生成**：优先使用 Pollinations.ai (FLUX) 生成山水动漫风格背景，失败时自动切换 HuggingFace FLUX.1-schnell 备用方案，并含图片质量校验。
 - **Gemini 智能重试**：调用失败时按指数退避自动重试最多 3 次，全部失败则明确报错终止。
 - **动态视频效果**：Ken Burns 缓慢推进缩放、多图轮播交叉淡入淡出、逐句同步字幕、淡入淡出片头片尾。
 - **背景音乐混音**：可选从 Pixabay 自动下载免费古风 BGM，低音量循环混入音频轨。
@@ -62,7 +62,7 @@
 | **计算与调度环境** | GitHub Actions (`ubuntu-latest`) | 提供免费 Linux 虚拟环境（2核 CPU, 7GB 内存），满足视频合成算力需求 |
 | **大脑与意境理解** | Google Gemini API (`gemini-2.5-flash`) | 免费额度高，具备强上下文理解与结构化 JSON 输出能力 |
 | **语音合成 (TTS)** | `edge-tts` (Microsoft Edge API) | 免费、无 API Key 限制、音效极高、支持多种中文高质量 Neural 声线 |
-| **AI 图像生成（主）** | Pollinations.ai (FLUX) | 免费 REST API，免 Key，可快速生成高分辨率国风水墨图像 |
+| **AI 图像生成（主）** | Pollinations.ai (FLUX) | 免费 REST API，免 Key，可快速生成高分辨率山水动漫图像 |
 | **AI 图像生成（备）** | HuggingFace FLUX.1-schnell | 免费 Inference API（需 HF_TOKEN），FLUX 官方模型质量极高 |
 | **背景音乐** | Pixabay API | 免费下载古风/中国风 MP3 预览，自动循环混音 |
 | **视频合成压制** | MoviePy + FFmpeg | Python 管道化处理，支持 Ken Burns 缩放、多图轮播、逐句字幕、BGM 混音与 H.264 编码导出 |
@@ -136,8 +136,8 @@ prompt = f"""
   "author": "唐·李白",
   "poem": "床前明月光\n疑是地上霜\n举头望明月\n低头思故乡",
   "translation": "明亮的月光洒在床前，好像地上铺了一层洁白的霜。抬起头望着明月，低头思念起故乡。",
-  "image_prompt": "Traditional Chinese ink painting, peaceful night, bright full moon in sky, ancient bedroom with window, misty mountains, high quality, 8k",
-  "image_prompt_2": "Traditional Chinese ink painting, courtyard with moonlight, bamboo grove, distant mountains, serene atmosphere, high quality"
+  "image_prompt": "Chinese landscape, anime art style, Ghibli inspired, peaceful night, bright full moon, ancient bedroom, misty mountains, vibrant colors",
+  "image_prompt_2": "Chinese landscape, anime art style, Ghibli inspired, courtyard with moonlight, bamboo grove, distant mountains, serene atmosphere, vibrant colors"
 }
 ```
 

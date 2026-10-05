@@ -307,7 +307,7 @@ def build_video(poem_data, poem_audio_path, trans_audio_path, image_paths, bgm_p
         fontsize=44, color='white', font=FONT_PATH,
         stroke_color='#FFD700', stroke_width=2,
         method='caption', size=(900, None), align='Center'
-    ).set_duration(total_duration).set_position(('center', 0.08), relative=True)
+    ).set_duration(total_duration).set_position(('center', 0.30), relative=True)
 
     # --- 合成所有图层 ---
     all_clips = [bg_clip] + subtitle_clips + [title_clip]
