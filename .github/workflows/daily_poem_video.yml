@@ -1,10 +1,7 @@
 name: Daily Poem Video Generator
 
 on:
-  schedule:
-    # 每天北京时间早上 08:00 运行 (对应 UTC 时间 0:00)
-    - cron: '0 0 * * *'
-  workflow_dispatch: # 允许在 GitHub Web 界面手动点击运行测试
+  workflow_dispatch: # 手动触发
 
 permissions:
   contents: write # 给予机器人写回 history.json 的权限
