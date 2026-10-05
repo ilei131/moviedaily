@@ -356,17 +356,26 @@ def embed_video_cover(video_path, cover_image_path):
 # --- 13. 发送 Telegram 视频 ---
 def send_to_telegram(video_path, caption):
     url = f"https://api.telegram.org/bot{TG_BOT_TOKEN}/sendVideo"
-    targets = [TG_CHAT_ID]
+    targets = {"个人": TG_CHAT_ID}
     if TG_CHANNEL_ID:
-        targets.append(TG_CHANNEL_ID)
+        targets["频道"] = TG_CHANNEL_ID
 
-    for chat_id in targets:
+    for label, chat_id in targets.items():
         with open(video_path, 'rb') as video_file:
             files = {'video': video_file}
             data = {'chat_id': chat_id, 'caption': caption, 'parse_mode': 'Markdown'}
-            res = requests.post(url, files=files, data=data)
-            target_name = "频道" if chat_id == TG_CHANNEL_ID else "Bot"
-            print(f"Telegram {target_name} 推送响应:", res.json())
+            try:
+                res = requests.post(url, files=files, data=data, timeout=60)
+                resp = res.json()
+                ok = resp.get('ok', False)
+                if ok:
+                    print(f"Telegram → {label}({chat_id}) 推送成功")
+                else:
+                    code = resp.get('error_code', '?')
+                    desc = resp.get('description', '未知错误')
+                    print(f"Telegram → {label}({chat_id}) 推送失败: [{code}] {desc}")
+            except Exception as e:
+                print(f"Telegram → {label}({chat_id}) 推送异常: {e}")
 
 # --- 主入口 ---
 async def main():
