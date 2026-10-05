@@ -272,8 +272,8 @@ def build_video(poem_data, poem_audio_path, trans_audio_path, image_paths, bgm_p
         if end_time <= current_time:
             continue
         txt = TextClip(
-            line, fontsize=52, color='white', font=FONT_PATH,
-            stroke_color='black', stroke_width=4,
+            line, fontsize=52, color='#FFD700', font=FONT_PATH,
+            stroke_color='#3E2723', stroke_width=3,
             method='caption', size=(900, None), align='Center'
         ).set_start(current_time).set_duration(end_time - current_time).set_position(('center', 0.72), relative=True)
         subtitle_clips.append(txt)
@@ -293,7 +293,7 @@ def build_video(poem_data, poem_audio_path, trans_audio_path, image_paths, bgm_p
     title_clip = TextClip(
         f"《{poem_data['title']}》\n{poem_data['author']}",
         fontsize=44, color='#FFD700', font=FONT_PATH,
-        stroke_color='black', stroke_width=4,
+        stroke_color='#3E2723', stroke_width=3,
         method='caption', size=(900, None), align='Center'
     ).set_duration(total_duration).set_position(('center', 0.08), relative=True)
 
