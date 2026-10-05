@@ -272,14 +272,17 @@ def build_video(poem_data, poem_audio_path, trans_audio_path, image_paths, bgm_p
     seg = total_duration / num_images
     image_clips = []
     for i, img_path in enumerate(image_paths):
+        is_last = (i == num_images - 1)
+        dur = total_duration - i * seg + 0.8
         clip = (ImageClip(img_path)
                 .set_start(i * seg)
-                .set_duration(seg + 0.8)
+                .set_duration(dur)
                 .resize(lambda t, idx=i: (int(IMAGE_WIDTH * (1 + 0.05 * (t - idx * seg) / max(seg, 0.1))),
                                            int(IMAGE_HEIGHT * (1 + 0.05 * (t - idx * seg) / max(seg, 0.1)))))
                 .set_position(('center', 'center'))
-                .crossfadein(0.6)
-                .crossfadeout(0.6))
+                .crossfadein(0.6))
+        if not is_last:
+            clip = clip.crossfadeout(0.6)
         image_clips.append(clip)
 
     # --- 逐句字幕（原文逐行动态出现）---
@@ -294,8 +297,8 @@ def build_video(poem_data, poem_audio_path, trans_audio_path, image_paths, bgm_p
         if end_time <= current_time:
             continue
         txt = TextClip(
-            line, fontsize=52, color='#FFD700', font=FONT_PATH,
-            stroke_color='#3E2723', stroke_width=3,
+            line, fontsize=52, color='white', font=FONT_PATH,
+            stroke_color='#FFD700', stroke_width=4,
             method='caption', size=(900, None), align='Center'
         ).set_start(current_time).set_duration(end_time - current_time).set_position(('center', 0.72), relative=True)
         subtitle_clips.append(txt)
@@ -305,8 +308,8 @@ def build_video(poem_data, poem_audio_path, trans_audio_path, image_paths, bgm_p
     if poem_data.get('translation'):
         trans_txt = TextClip(
             f"【译文】\n{poem_data['translation']}",
-            fontsize=44, color='#F5F5DC', font=FONT_PATH,
-            stroke_color='black', stroke_width=3,
+            fontsize=44, color='white', font=FONT_PATH,
+            stroke_color='#FFD700', stroke_width=4,
             method='caption', size=(880, None), align='Center'
         ).set_start(trans_start_time).set_duration(audio_trans.duration).set_position(('center', 0.72), relative=True)
         subtitle_clips.append(trans_txt)
@@ -314,8 +317,8 @@ def build_video(poem_data, poem_audio_path, trans_audio_path, image_paths, bgm_p
     # 标题与作者（顶部固定）
     title_clip = TextClip(
         f"《{poem_data['title']}》\n{poem_data['author']}",
-        fontsize=44, color='#FFD700', font=FONT_PATH,
-        stroke_color='#3E2723', stroke_width=3,
+        fontsize=44, color='white', font=FONT_PATH,
+        stroke_color='#FFD700', stroke_width=4,
         method='caption', size=(900, None), align='Center'
     ).set_duration(total_duration).set_position(('center', 0.08), relative=True)
 
