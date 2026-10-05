@@ -43,6 +43,14 @@ jobs:
       run: |
         python main.py
 
+    - name: Upload Video as Artifact
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: daily-poem-video
+        path: final_poem.mp4
+        retention-days: 7
+
     - name: Auto Commit Updated history.json
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
