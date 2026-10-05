@@ -1,0 +1,6 @@
+google-genai
+edge-tts
+moviepy<2.0.0
+requests
+pillow
+pillow-heif
