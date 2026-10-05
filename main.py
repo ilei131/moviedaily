@@ -252,8 +252,8 @@ def estimate_line_durations(poem_lines, total_duration):
         durations.append(total_duration * chars / total_chars if chars > 0 else 0)
     return durations
 
-# --- 11. 视频合成 (Ken Burns + 逐句字幕 + 多图轮播 + 淡入淡出 + BGM) ---
-def build_video(poem_data, poem_audio_path, trans_audio_path, image_paths, bgm_path, output_video_path):
+# --- 11. 视频合成 (Ken Burns + 逐句字幕 + BGM) ---
+def build_video(poem_data, poem_audio_path, trans_audio_path, image_paths, bgm_path, output_video_path, poem_body_offset=0.0):
     audio_poem = AudioFileClip(poem_audio_path)
     audio_trans = AudioFileClip(trans_audio_path)
 
@@ -272,9 +272,11 @@ def build_video(poem_data, poem_audio_path, trans_audio_path, image_paths, bgm_p
 
     # --- 逐句字幕（原文逐行动态出现）---
     poem_lines = [l.strip() for l in poem_data['poem'].split('\n') if l.strip()]
-    line_durations = estimate_line_durations(poem_lines, poem_duration)
+    poem_body_start = poem_body_offset
+    poem_body_duration = max(poem_duration - poem_body_start, 1.0)
+    line_durations = estimate_line_durations(poem_lines, poem_body_duration)
     subtitle_clips = []
-    current_time = 0.0
+    current_time = poem_body_start
     for i, (line, dur) in enumerate(zip(poem_lines, line_durations)):
         if dur <= 0:
             continue
@@ -395,6 +397,12 @@ async def main():
     await generate_audio(f"{poem_data['title']}。{poem_data['author']}。{poem_data['poem']}", "zh-CN-YunxiNeural", poem_audio_path)
     await generate_audio(f"译文含义：{poem_data['translation']}", "zh-CN-XiaoxiaoNeural", trans_audio_path)
 
+    # 单独生成标题+作者音频，测量其时长用作诗句字幕偏移
+    title_author_audio_path = "title_author.mp3"
+    await generate_audio(f"{poem_data['title']}。{poem_data['author']}。", "zh-CN-YunxiNeural", title_author_audio_path)
+    poem_body_offset = AudioFileClip(title_author_audio_path).duration
+    print(f"标题+作者朗读时长: {poem_body_offset:.1f}s，诗句字幕从 {poem_body_offset:.1f}s 开始")
+
     print("3. 生成意境背景图...")
     download_background_image(poem_data['image_prompt'], bg_image_1_path)
 
@@ -404,7 +412,7 @@ async def main():
     download_bgm(bgm_path)
 
     print("5. 正在合成视频 (Ken Burns + 逐句字幕 + BGM)...")
-    build_video(poem_data, poem_audio_path, trans_audio_path, image_paths, bgm_path, out_video_path)
+    build_video(poem_data, poem_audio_path, trans_audio_path, image_paths, bgm_path, out_video_path, poem_body_offset)
 
     print("5b. 嵌入视频封面...")
     embed_video_cover(out_video_path, bg_image_1_path)
