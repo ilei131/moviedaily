@@ -4,6 +4,8 @@ import random
 import asyncio
 import requests
 import math
+import subprocess
+import glob
 from PIL import Image
 from google import genai
 from google.genai import types
@@ -25,6 +27,26 @@ MIN_IMAGE_SIZE_KB = 30
 
 if not GEMINI_API_KEY or not TG_BOT_TOKEN or not TG_CHAT_ID:
     raise ValueError("缺少必要的环境变量！请检查 GEMINI_API_KEY, TG_BOT_TOKEN, TG_CHAT_ID 设置。")
+
+# --- 中文字体自动发现 ---
+def _discover_chinese_font():
+    candidates = [
+        '/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc',
+        '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc',
+        '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
+        '/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf',
+    ]
+    for path in candidates:
+        if os.path.exists(path):
+            return path
+    for pattern in ['/usr/share/fonts/**/*.ttc', '/usr/share/fonts/**/*.ttf']:
+        matches = glob.glob(pattern, recursive=True)
+        if matches:
+            return matches[0]
+    return 'WenQuanYi-ZenHei'
+
+FONT_PATH = _discover_chinese_font()
+print(f"使用字体: {FONT_PATH}")
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 
@@ -249,7 +271,7 @@ def build_video(poem_data, poem_audio_path, trans_audio_path, image_paths, bgm_p
         if end_time <= current_time:
             continue
         txt = TextClip(
-            line, fontsize=52, color='white', font='WenQuanYi-ZenHei',
+            line, fontsize=52, color='white', font=FONT_PATH,
             stroke_color='black', stroke_width=2,
             method='caption', size=(900, None), align='Center'
         ).set_start(current_time).set_duration(end_time - current_time).set_position(('center', 0.72), relative=True)
@@ -260,7 +282,7 @@ def build_video(poem_data, poem_audio_path, trans_audio_path, image_paths, bgm_p
     if poem_data.get('translation'):
         trans_txt = TextClip(
             f"【译文】\n{poem_data['translation']}",
-            fontsize=36, color='#F5F5DC', font='WenQuanYi-ZenHei',
+            fontsize=36, color='#F5F5DC', font=FONT_PATH,
             stroke_color='black', stroke_width=1.5,
             method='caption', size=(880, None), align='Center'
         ).set_start(trans_start_time).set_duration(audio_trans.duration).set_position(('center', 0.72), relative=True)
@@ -269,7 +291,7 @@ def build_video(poem_data, poem_audio_path, trans_audio_path, image_paths, bgm_p
     # 标题与作者（顶部固定）
     title_clip = TextClip(
         f"《{poem_data['title']}》\n{poem_data['author']}",
-        fontsize=44, color='#FFD700', font='WenQuanYi-ZenHei',
+        fontsize=44, color='#FFD700', font=FONT_PATH,
         stroke_color='black', stroke_width=2,
         method='caption', size=(900, None), align='Center'
     ).set_duration(total_duration).set_position(('center', 0.08), relative=True)
@@ -303,7 +325,24 @@ def build_video(poem_data, poem_audio_path, trans_audio_path, image_paths, bgm_p
         preset='medium', bitrate='2000k'
     )
 
-# --- 12. 发送 Telegram 视频 ---
+# --- 12. 嵌入视频封面 ---
+def embed_video_cover(video_path, cover_image_path):
+    try:
+        temp_path = video_path.replace('.mp4', '_cover.mp4')
+        subprocess.run([
+            'ffmpeg', '-i', video_path, '-i', cover_image_path,
+            '-map', '0', '-map', '1', '-c', 'copy',
+            '-disposition:v:1', 'attached_pic',
+            temp_path
+        ], check=True, capture_output=True)
+        os.replace(temp_path, video_path)
+        print("视频封面已嵌入")
+        return True
+    except Exception as e:
+        print(f"封面嵌入失败: {e}")
+        return False
+
+# --- 13. 发送 Telegram 视频 ---
 def send_to_telegram(video_path, caption):
     url = f"https://api.telegram.org/bot{TG_BOT_TOKEN}/sendVideo"
     with open(video_path, 'rb') as video_file:
@@ -349,6 +388,9 @@ async def main():
 
     print("5. 正在合成视频 (Ken Burns + 逐句字幕 + 多图轮播 + BGM)...")
     build_video(poem_data, poem_audio_path, trans_audio_path, image_paths, bgm_path, out_video_path)
+
+    print("5b. 嵌入视频封面...")
+    embed_video_cover(out_video_path, bg_image_1_path)
 
     print("6. 上传并推送至 Telegram Bot...")
     caption = f"📜 *《{poem_data['title']}》* — {poem_data['author']}\n\n{poem_data['poem']}\n\n💡 *译文*\n{poem_data['translation']}"
