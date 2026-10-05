@@ -149,20 +149,29 @@ def validate_image(file_path):
         return False
 
 # --- 6. Pollinations.ai 主方案 ---
-def download_pollinations_image(prompt, output_path, max_retries=2):
+def download_pollinations_image(prompt, output_path, max_retries=3):
     for attempt in range(max_retries):
         try:
             full_prompt = f"{prompt}, masterpiece, traditional Chinese artistic style"
             encoded = requests.utils.quote(full_prompt)
             url = f"https://image.pollinations.ai/prompt/{encoded}?width={IMAGE_WIDTH}&height={IMAGE_HEIGHT}&nologo=true&nofeed=true&seed={random.randint(1, 999999)}"
-            res = requests.get(url, timeout=90)
+            res = requests.get(url, timeout=120)
             if res.status_code == 200 and len(res.content) > 1000:
                 with open(output_path, 'wb') as f:
                     f.write(res.content)
                 if validate_image(output_path):
                     return True
+                else:
+                    print(f"Pollinations 第{attempt+1}次校验不通过")
+            else:
+                print(f"Pollinations 第{attempt+1}次返回 status={res.status_code}, size={len(res.content)}")
+        except requests.exceptions.Timeout:
+            print(f"Pollinations 第{attempt+1}次超时")
         except Exception as e:
             print(f"Pollinations 第{attempt+1}次失败: {e}")
+        if attempt < max_retries - 1:
+            import time
+            time.sleep(2)
     return False
 
 # --- 7. HuggingFace FLUX.1-schnell 备用方案 ---
@@ -186,6 +195,18 @@ def download_huggingface_image(prompt, output_path):
     return False
 
 # --- 8. 主备切换图像下载入口 ---
+def _generate_gradient_bg(output_path):
+    from PIL import ImageDraw
+    img = Image.new("RGB", (IMAGE_WIDTH, IMAGE_HEIGHT), (30, 30, 40))
+    draw = ImageDraw.Draw(img)
+    for y in range(IMAGE_HEIGHT):
+        r = int(30 + 15 * y / IMAGE_HEIGHT)
+        g = int(30 + 15 * y / IMAGE_HEIGHT)
+        b = int(40 + 30 * y / IMAGE_HEIGHT)
+        draw.line([(0, y), (IMAGE_WIDTH, y)], fill=(r, g, b))
+    img.save(output_path, "JPEG", quality=95)
+    print("已生成渐变纯色兜底背景")
+
 def download_background_image(prompt, output_path):
     print(f"尝试 Pollinations.ai 生成图像...")
     if download_pollinations_image(prompt, output_path):
@@ -195,7 +216,8 @@ def download_background_image(prompt, output_path):
     if download_huggingface_image(prompt, output_path):
         print("HuggingFace 备用方案成功")
         return
-    raise RuntimeError("所有图像生成方案均失败，请检查网络或 API 配置")
+    print("所有在线 API 均失败，使用本地渐变纯色背景兜底")
+    _generate_gradient_bg(output_path)
 
 # --- 9. 背景音乐下载 (Pixabay) ---
 def download_bgm(output_path):
